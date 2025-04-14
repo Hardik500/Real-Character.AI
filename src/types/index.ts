@@ -58,6 +58,7 @@ export type RootStackParamList = {
   Register: undefined;
   Notifications: undefined;
   Search: undefined;
+  Chat: { userId: string; username: string; profilePicture?: string };
 };
 
 // API Response types
@@ -66,4 +67,36 @@ export interface ApiResponse<T> {
   error: string | null;
   success: boolean;
   status: number;
+}
+
+// Chat related types
+export interface ChatMessage {
+  id: string;
+  content: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
+  status?: 'sent' | 'delivered' | 'read';
+  isLoading?: boolean;
+}
+
+export interface UserProfile {
+  id: number;
+  username: string;
+  email?: string;
+  phone?: string;
+  description?: string;
+  created_at: string;
+  profilePicture?: string;
+  lastMessage?: string;
+  lastMessageTime?: Date;
+}
+
+export interface QuestionRequest {
+  question: string;
+}
+
+export interface AnswerResponse {
+  question: string;
+  answer: string;
+  username: string;
 }

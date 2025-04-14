@@ -11,10 +11,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import screens
-import HomeScreen from '@screens/Home';
+import { HomeScreen, ChatScreen } from '@screens/index';
 
 // Import types
-import { RootStackParamList } from '@types/index';
+import { RootStackParamList } from './types';
 
 // Create the navigation stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,9 +47,14 @@ function App(): React.JSX.Element {
           <Stack.Screen 
             name="Home" 
             component={HomeScreen} 
-            options={{ title: 'AI Social' }} 
+            options={{ title: 'Chats' }} 
           />
-          {/* Additional screens will be added as we build out the app */}
+          <Stack.Screen 
+            name="Chat" 
+            component={ChatScreen} 
+            options={{ headerShown: true }}
+          />
+          {/* Additional screens can be added as needed */}
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

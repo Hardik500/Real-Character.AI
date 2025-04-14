@@ -1,25 +1,26 @@
 import React from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
+  SafeAreaView,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList } from '@/types';
+import UserList from '@components/UserList';
 
 type HomeProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
-const HomeScreen: React.FC<HomeProps> = ({}) => {
+const HomeScreen: React.FC<HomeProps> = () => {
   return (
-    <View style={[styles.container]}>
-      <Text>Home</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <UserList />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8f8f8',
   },
 });
 
