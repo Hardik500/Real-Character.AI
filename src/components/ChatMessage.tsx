@@ -23,9 +23,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         {message.isLoading ? (
           <Text style={styles.loadingText}>...</Text>
         ) : (
-          <Text style={styles.messageText}>{message.content}</Text>
+          <Text style={[
+            styles.messageText,
+            isUserMessage ? styles.userMessageText : styles.aiMessageText
+          ]}>
+            {message.content}
+          </Text>
         )}
-        <Text style={styles.timestamp}>
+        <Text style={[
+          styles.timestamp,
+          isUserMessage ? styles.userTimestamp : styles.aiTimestamp
+        ]}>
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -54,28 +62,45 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   userBubble: {
-    backgroundColor: '#DCF8C6',
+    backgroundColor: '#007AFF', // iOS blue color for user messages
     borderTopRightRadius: 4,
   },
   aiBubble: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F2F2F7', // Light gray for AI messages
     borderTopLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   messageText: {
     fontSize: 16,
-    color: '#000000',
+    lineHeight: 22,
+  },
+  userMessageText: {
+    color: '#FFFFFF', // White text for user messages
+  },
+  aiMessageText: {
+    color: '#000000', // Black text for AI messages
   },
   timestamp: {
     fontSize: 11,
-    color: '#999999',
-    alignSelf: 'flex-end',
     marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  userTimestamp: {
+    color: 'rgba(255, 255, 255, 0.7)', // Slightly transparent white for user bubble timestamps
+  },
+  aiTimestamp: {
+    color: '#8E8E93', // Medium gray for AI bubble timestamps
   },
   loadingText: {
     fontSize: 16,
-    color: '#777',
+    color: '#8E8E93',
   },
 });
 

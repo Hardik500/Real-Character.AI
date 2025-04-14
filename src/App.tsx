@@ -22,11 +22,15 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
+  // Define common styles for headers
+  const headerBackgroundColor = '#007AFF'; // Blue color that works well in both light and dark mode
+  const headerTextColor = '#FFFFFF'; // White text for good contrast
+
   return (
     <SafeAreaProvider>
       <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={isDarkMode ? '#000' : '#fff'}
+        barStyle="light-content" // Always use light content for the blue header
+        backgroundColor={headerBackgroundColor}
       />
       <NavigationContainer>
         <Stack.Navigator
@@ -34,11 +38,12 @@ function App(): React.JSX.Element {
           screenOptions={{
             headerShown: true,
             headerStyle: {
-              backgroundColor: isDarkMode ? '#1a1a1a' : '#f8f8f8',
+              backgroundColor: headerBackgroundColor,
             },
-            headerTintColor: isDarkMode ? '#ffffff' : '#000000',
+            headerTintColor: headerTextColor,
             headerTitleStyle: {
               fontWeight: 'bold',
+              color: headerTextColor,
             },
             contentStyle: {
               backgroundColor: isDarkMode ? '#121212' : '#ffffff',

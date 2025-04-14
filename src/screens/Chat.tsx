@@ -33,6 +33,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
       title: username,
       headerBackVisible: true,
       headerTitleAlign: 'left',
+      headerStyle: {
+        backgroundColor: '#007AFF', // Use a blue background that works in both light and dark mode
+      },
+      headerTintColor: '#FFFFFF', // White text for good contrast
       headerTitle: () => (
         <View style={styles.headerContainer}>
           <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
@@ -164,11 +168,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     marginLeft: 8,
+    color: '#FFFFFF', // Ensure text is white for visibility
   },
   avatarSmall: {
     width: 30,
     height: 30,
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#FFFFFF', // Add a white border to make avatar stand out
   },
 });
 

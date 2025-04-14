@@ -125,12 +125,15 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EFEFEF',
+    backgroundColor: '#FFFFFF',
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   userInfo: {
     flex: 1,
@@ -139,24 +142,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
+    color: '#000000',
   },
   lastMessage: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
   },
   time: {
     fontSize: 12,
-    color: '#999',
+    color: '#666666',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8F8F8',
   },
   errorText: {
-    color: 'red',
+    color: '#FF3B30',
     marginBottom: 16,
     textAlign: 'center',
+    fontWeight: '500',
   },
   retryButton: {
     paddingHorizontal: 16,
@@ -170,8 +176,9 @@ const styles = StyleSheet.create({
   },
   noUsersText: {
     fontSize: 16,
-    color: '#666',
+    color: '#666666',
     marginBottom: 16,
+    fontWeight: '500',
   },
 });
 

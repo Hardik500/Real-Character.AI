@@ -32,6 +32,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false }) => {
         <TextInput
           style={styles.input}
           placeholder="Type a message..."
+          placeholderTextColor="#8E8E93"
           value={message}
           onChangeText={setMessage}
           multiline
@@ -40,11 +41,18 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false }) => {
           onSubmitEditing={handleSend}
         />
         <TouchableOpacity 
-          style={[styles.sendButton, (!message.trim() || disabled) && styles.disabledButton]}
+          style={[
+            styles.sendButton, 
+            message.trim() && !disabled ? styles.activeSendButton : styles.disabledButton
+          ]}
           onPress={handleSend}
           disabled={!message.trim() || disabled}
         >
-          <Icon name="send" size={22} color={!message.trim() || disabled ? '#A0A0A0' : '#007AFF'} />
+          <Icon 
+            name="send" 
+            size={22} 
+            color={!message.trim() || disabled ? '#8E8E93' : '#FFFFFF'} 
+          />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -55,9 +63,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     padding: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F2F2F7',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#D1D1D6',
     alignItems: 'center',
   },
   input: {
@@ -69,17 +77,22 @@ const styles = StyleSheet.create({
     marginRight: 8,
     fontSize: 16,
     maxHeight: 100,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    color: '#000000',
   },
   sendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E8F0FE',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  activeSendButton: {
+    backgroundColor: '#007AFF',
+  },
   disabledButton: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#E5E5EA',
   },
 });
 
