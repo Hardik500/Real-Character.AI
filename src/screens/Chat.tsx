@@ -51,7 +51,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     });
   }, [navigation, username, profilePicture]);
 
-  // Fetch conversation history from backend
+  // Fetch conversation history from backend (on mount/clear only)
   const fetchHistory = React.useCallback(async () => {
     try {
       const history: ConversationHistoryResponse[] = await getConversationHistory(Number(userId));
@@ -82,14 +82,51 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     }
   }, [messages]);
 
+  // Optimistic UI for sending messages
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || sending) return;
     setSending(true);
+
+    // Optimistically add user message
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      content,
+      sender: 'user',
+      timestamp: new Date(),
+      status: 'sent',
+    };
+    setMessages(prev => [...prev, userMsg]);
+
+    // Add AI loading message
+    const aiLoadingMsg: ChatMessage = {
+      id: 'ai-loading-' + Date.now(),
+      content: '...',
+      sender: 'ai',
+      timestamp: new Date(),
+      isLoading: true,
+    };
+    setMessages(prev => [...prev, aiLoadingMsg]);
+
     try {
-      await sendMessage(username, content); // This will update backend history
-      await fetchHistory();
+      const response = await sendMessage(username, content);
+      // Replace the loading message with the real answer
+      setMessages(prev => prev.map(msg =>
+        msg.id === aiLoadingMsg.id
+          ? {
+              ...msg,
+              content: response.answer,
+              isLoading: false,
+              timestamp: new Date(),
+            }
+          : msg
+      ));
     } catch (error) {
-      console.error('Error sending message:', error);
+      // Optionally show error in the loading message
+      setMessages(prev => prev.map(msg =>
+        msg.id === aiLoadingMsg.id
+          ? { ...msg, content: 'Error getting response', isLoading: false }
+          : msg
+      ));
     } finally {
       setSending(false);
     }
