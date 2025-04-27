@@ -100,3 +100,17 @@ export interface AnswerResponse {
   answer: string;
   username: string;
 }
+
+export interface ConversationHistoryResponse {
+  id: number;
+  user_id: number;
+  role: 'user' | 'ai';
+  content: string;
+  created_at: string;
+}
+
+export interface ConversationHistoryCreate {
+  user_id: number;
+  role: 'user' | 'ai';
+  content: string;
+}

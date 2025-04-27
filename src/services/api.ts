@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { UserProfile, QuestionRequest, AnswerResponse } from '@/types';
+import { UserProfile, QuestionRequest, AnswerResponse, ConversationHistoryResponse, ConversationHistoryCreate } from '@/types';
 
 // Create Axios instance with base URL
 // Using the IP address instead of localhost since the mobile device can't access localhost on your computer
-const API_URL = 'http://192.168.68.103:8000';
+const API_URL = 'http://192.168.68.104:8000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -41,6 +41,21 @@ export const sendMessage = async (username: string, message: string): Promise<An
     console.error('Error sending message:', error);
     throw error;
   }
+};
+
+// Conversation history endpoints
+export const getConversationHistory = async (userId: number): Promise<ConversationHistoryResponse[]> => {
+  const response = await api.get(`/conversations/history/${userId}`);
+  return response.data;
+};
+
+export const addConversationHistory = async (entry: ConversationHistoryCreate): Promise<ConversationHistoryResponse> => {
+  const response = await api.post(`/conversations/history/`, entry);
+  return response.data;
+};
+
+export const clearConversationHistory = async (userId: number): Promise<void> => {
+  await api.delete(`/conversations/history/${userId}`);
 };
 
 // Add request interceptor for logging

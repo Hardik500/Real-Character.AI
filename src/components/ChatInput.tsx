@@ -4,8 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Platform,
-  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -25,37 +23,33 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 85 : 0}>
-      <View style={styles.container}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          placeholderTextColor="#8E8E93"
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={500}
-          editable={!disabled}
-          onSubmitEditing={handleSend}
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Type a message..."
+        placeholderTextColor="#8E8E93"
+        value={message}
+        onChangeText={setMessage}
+        multiline
+        maxLength={500}
+        editable={!disabled}
+        onSubmitEditing={handleSend}
+      />
+      <TouchableOpacity 
+        style={[
+          styles.sendButton, 
+          message.trim() && !disabled ? styles.activeSendButton : styles.disabledButton
+        ]}
+        onPress={handleSend}
+        disabled={!message.trim() || disabled}
+      >
+        <Icon 
+          name="send" 
+          size={22} 
+          color={!message.trim() || disabled ? '#8E8E93' : '#FFFFFF'} 
         />
-        <TouchableOpacity 
-          style={[
-            styles.sendButton, 
-            message.trim() && !disabled ? styles.activeSendButton : styles.disabledButton
-          ]}
-          onPress={handleSend}
-          disabled={!message.trim() || disabled}
-        >
-          <Icon 
-            name="send" 
-            size={22} 
-            color={!message.trim() || disabled ? '#8E8E93' : '#FFFFFF'} 
-          />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </TouchableOpacity>
+    </View>
   );
 };
 

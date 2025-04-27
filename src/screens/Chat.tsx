@@ -6,24 +6,29 @@ import {
   SafeAreaView,
   Text,
   Image,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, ChatMessage } from '@/types';
+import { RootStackParamList, ChatMessage, ConversationHistoryResponse } from '@/types';
 import ChatMessageComponent from '@components/ChatMessage';
 import ChatInput from '@components/ChatInput';
-import { sendMessage } from '@services/api';
+import { sendMessage, getConversationHistory, clearConversationHistory } from '@services/api';
 import { useFocusEffect } from '@react-navigation/native';
-
-type ChatScreenProps = NativeStackScreenProps<RootStackParamList, 'Chat'>;
+import { useHeaderHeight } from '@react-navigation/elements';
 
 // Default avatar for users without a profile picture
 const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=random';
 
+type ChatScreenProps = NativeStackScreenProps<RootStackParamList, 'Chat'>;
+
 const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
-  const { username, profilePicture } = route.params;
+  const { userId, username, profilePicture } = route.params;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState<boolean>(false);
   const flatListRef = useRef<FlatList>(null);
+  const headerHeight = useHeaderHeight();
 
   // Set up the navigation header
   useEffect(() => {
@@ -34,9 +39,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
       headerBackVisible: true,
       headerTitleAlign: 'left',
       headerStyle: {
-        backgroundColor: '#007AFF', // Use a blue background that works in both light and dark mode
+        backgroundColor: '#007AFF',
       },
-      headerTintColor: '#FFFFFF', // White text for good contrast
+      headerTintColor: '#FFFFFF',
       headerTitle: () => (
         <View style={styles.headerContainer}>
           <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
@@ -46,7 +51,29 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     });
   }, [navigation, username, profilePicture]);
 
-  // Scroll to the bottom when messages change
+  // Fetch conversation history from backend
+  const fetchHistory = React.useCallback(async () => {
+    try {
+      const history: ConversationHistoryResponse[] = await getConversationHistory(Number(userId));
+      // Map ConversationHistoryResponse to ChatMessage
+      const mapped: ChatMessage[] = history.map((msg) => ({
+        id: msg.id.toString(),
+        content: msg.content,
+        sender: msg.role,
+        timestamp: new Date(msg.created_at),
+      }));
+      setMessages(mapped);
+    } catch (error) {
+      console.error('Failed to fetch conversation history:', error);
+    }
+  }, [userId]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchHistory();
+    }, [fetchHistory])
+  );
+
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -55,81 +82,25 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     }
   }, [messages]);
 
-  // Add a welcome message when the chat opens
-  useFocusEffect(
-    React.useCallback(() => {
-      if (messages.length === 0) {
-        // Add welcome message
-        const welcomeMessage: ChatMessage = {
-          id: 'welcome',
-          content: `Hello! I'm ${username}'s AI personality. Ask me anything!`,
-          sender: 'ai',
-          timestamp: new Date(),
-        };
-        setMessages([welcomeMessage]);
-      }
-    }, [username, messages.length])
-  );
-
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || sending) return;
-
-    // Create a new user message
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    // Create a temporary loading message for the AI
-    const tempAiMessage: ChatMessage = {
-      id: `temp-${Date.now().toString()}`,
-      content: '',
-      sender: 'ai',
-      timestamp: new Date(),
-      isLoading: true,
-    };
-
-    // Add both messages to the state
-    setMessages((prev) => [...prev, userMessage, tempAiMessage]);
     setSending(true);
-
     try {
-      // Send the message to the backend
-      const response = await sendMessage(username, content);
-
-      // Create the real AI message to replace the loading one
-      const aiMessage: ChatMessage = {
-        id: `ai-${Date.now().toString()}`,
-        content: response.answer,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-
-      // Replace the temporary message with the real one
-      setMessages((prev) => 
-        prev.map((msg) => 
-          msg.id === tempAiMessage.id ? aiMessage : msg
-        )
-      );
+      await sendMessage(username, content); // This will update backend history
+      await fetchHistory();
     } catch (error) {
       console.error('Error sending message:', error);
-      
-      // Replace the temporary message with an error message
-      setMessages((prev) => 
-        prev.map((msg) => 
-          msg.id === tempAiMessage.id 
-            ? {
-                ...msg,
-                content: 'Sorry, I could not process your message. Please try again.',
-                isLoading: false,
-              }
-            : msg
-        )
-      );
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleClear = async () => {
+    try {
+      await clearConversationHistory(Number(userId));
+      setMessages([]);
+    } catch (error) {
+      console.error('Failed to clear conversation history:', error);
     }
   };
 
@@ -138,16 +109,39 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messageList}
-      />
-      <ChatInput onSend={handleSendMessage} disabled={sending} />
-    </SafeAreaView>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
+    >
+      <SafeAreaView style={styles.container}>
+        {/* Clear button at the top right */}
+        <View style={styles.topRow}>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity style={styles.clearButtonTop} onPress={handleClear} disabled={sending}>
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
+        {/* Message list or default message */}
+        {messages.length === 0 ? (
+          <View style={styles.defaultMessageContainer}>
+            <Text style={styles.defaultMessageText}>Start the conversation!</Text>
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messageList}
+          />
+        )}
+        {/* Chat input at the bottom, full width */}
+        <View style={styles.inputRowFull}>
+          <ChatInput onSend={handleSendMessage} disabled={sending} />
+        </View>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -155,6 +149,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 0,
+  },
+  clearButtonTop: {
+    backgroundColor: '#E5E5EA',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  clearButtonText: {
+    color: '#007AFF',
+    fontWeight: '600',
+    fontSize: 15,
   },
   messageList: {
     paddingVertical: 8,
@@ -168,14 +181,30 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     marginLeft: 8,
-    color: '#FFFFFF', // Ensure text is white for visibility
+    color: '#FFFFFF',
   },
   avatarSmall: {
     width: 30,
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#FFFFFF', // Add a white border to make avatar stand out
+    borderColor: '#FFFFFF',
+  },
+  inputRowFull: {
+    width: '100%',
+    paddingHorizontal: 0,
+    paddingBottom: 8,
+    backgroundColor: '#F2F2F7',
+  },
+  defaultMessageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  defaultMessageText: {
+    color: '#8E8E93',
+    fontSize: 16,
+    fontStyle: 'italic',
   },
 });
 
