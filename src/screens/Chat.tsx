@@ -23,6 +23,13 @@ const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=random';
 
 type ChatScreenProps = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
+const ChatHeaderTitle = ({ avatarUrl, username }: { avatarUrl: string; username: string }) => (
+  <View style={styles.headerContainer}>
+    <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
+    <Text style={styles.headerTitle}>{username}</Text>
+  </View>
+);
+
 const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
   const { userId, username, profilePicture } = route.params;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -42,12 +49,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
         backgroundColor: '#007AFF',
       },
       headerTintColor: '#FFFFFF',
-      headerTitle: () => (
-        <View style={styles.headerContainer}>
-          <Image source={{ uri: avatarUrl }} style={styles.avatarSmall} />
-          <Text style={styles.headerTitle}>{username}</Text>
-        </View>
-      ),
+      headerTitle: () => <ChatHeaderTitle avatarUrl={avatarUrl} username={username} />,
     });
   }, [navigation, username, profilePicture]);
 
@@ -245,4 +247,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChatScreen; 
+export default ChatScreen;
