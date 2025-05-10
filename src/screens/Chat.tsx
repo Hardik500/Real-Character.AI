@@ -14,7 +14,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, ChatMessage, ConversationHistoryResponse } from '@/types';
 import ChatMessageComponent from '@components/ChatMessage';
 import ChatInput from '@components/ChatInput';
-import { sendMessage, getConversationHistory, clearConversationHistory } from '@services/api';
+import { 
+  sendStreamingMessage, 
+  getConversationHistory,
+  clearConversationHistory,
+} from '@services/api';
 import { useFocusEffect } from '@react-navigation/native';
 import { useHeaderHeight } from '@react-navigation/elements';
 
@@ -86,7 +90,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
 
   // Optimistic UI for sending messages
   const handleSendMessage = async (content: string) => {
-    if (!content.trim() || sending) return;
+    if (!content.trim() || sending) {return;}
     setSending(true);
 
     // Optimistically add user message
@@ -102,7 +106,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     // Add AI loading message
     const aiLoadingMsg: ChatMessage = {
       id: 'ai-loading-' + Date.now(),
-      content: '...',
+      content: '',
       sender: 'ai',
       timestamp: new Date(),
       isLoading: true,
@@ -110,20 +114,90 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     setMessages(prev => [...prev, aiLoadingMsg]);
 
     try {
-      const response = await sendMessage(username, content);
-      // Replace the loading message with the real answer
-      setMessages(prev => prev.map(msg =>
-        msg.id === aiLoadingMsg.id
-          ? {
-              ...msg,
-              content: response.answer,
-              isLoading: false,
-              timestamp: new Date(),
-            }
-          : msg
+      // Use streaming mode (always)
+      let streamMessage: ChatMessage = {
+        id: `ai-streaming-${Date.now()}`,
+        content: '',
+        sender: 'ai',
+        timestamp: new Date(),
+        messageType: 'text',
+        isLoading: true,
+      };
+      
+      // Replace loading message with streaming message
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiLoadingMsg.id ? streamMessage : msg
       ));
+      
+      // Create a ref to the current content to avoid closure issues with setState
+      let currentStreamContent = '';
+      
+      // Handle streaming tokens
+      await sendStreamingMessage(
+        username, 
+        content,
+        (token) => {
+          // Update the content reference
+          currentStreamContent += token;
+          
+          // Update the streaming message with new content
+          setMessages(prev => prev.map(msg => 
+            msg.id === streamMessage.id 
+              ? { 
+                  ...msg, 
+                  content: currentStreamContent,
+                  isLoading: false, // No longer loading once we have content
+                } 
+              : msg
+          ));
+          
+          // Scroll to new content
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        },
+        (finalMessages) => {
+          console.log('Streaming complete, final messages:', finalMessages);
+          
+          // Remove streaming message
+          setMessages(prev => prev.filter(msg => msg.id !== streamMessage.id));
+          
+          // Add each message from the final result
+          if (finalMessages && finalMessages.length > 0) {
+            finalMessages.forEach((messageContent, index) => {
+              if (!messageContent || !messageContent.content) {
+                console.warn(`Skipping invalid message at index ${index}:`, messageContent);
+                return; // Skip invalid messages
+              }
+              
+              console.log(`Adding final message ${index}:`, messageContent);
+              
+              const newMsg: ChatMessage = {
+                id: `ai-response-${Date.now()}-${index}`,
+                content: messageContent.content,
+                sender: 'ai',
+                timestamp: new Date(Date.now() + index * 500),
+                messageType: messageContent.type || 'text',
+              };
+              setMessages(prev => [...prev, newMsg]);
+            });
+          } else {
+            // Fallback if no messages received
+            console.warn('No final messages received from streaming');
+            const fallbackMsg: ChatMessage = {
+              id: `ai-response-${Date.now()}`,
+              content: 'No content received from streaming response',
+              sender: 'ai',
+              timestamp: new Date(),
+              messageType: 'text',
+            };
+            setMessages(prev => [...prev, fallbackMsg]);
+          }
+        }
+      );
     } catch (error) {
-      // Optionally show error in the loading message
+      console.error('Error getting response:', error);
+      // Replace loading message with error
       setMessages(prev => prev.map(msg =>
         msg.id === aiLoadingMsg.id
           ? { ...msg, content: 'Error getting response', isLoading: false }
@@ -131,6 +205,11 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
       ));
     } finally {
       setSending(false);
+      
+      // Final scroll to make sure the latest message is visible
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 500);
     }
   };
 
@@ -154,13 +233,14 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
     >
       <SafeAreaView style={styles.container}>
-        {/* Clear button at the top right */}
+        {/* Top controls */}
         <View style={styles.topRow}>
-          <View style={{ flex: 1 }} />
+          {/* Clear button */}
           <TouchableOpacity style={styles.clearButtonTop} onPress={handleClear} disabled={sending}>
             <Text style={styles.clearButtonText}>Clear</Text>
           </TouchableOpacity>
         </View>
+        
         {/* Message list or default message */}
         {messages.length === 0 ? (
           <View style={styles.defaultMessageContainer}>
@@ -175,6 +255,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
             contentContainerStyle={styles.messageList}
           />
         )}
+        
         {/* Chat input at the bottom, full width */}
         <View style={styles.inputRowFull}>
           <ChatInput onSend={handleSendMessage} disabled={sending} />

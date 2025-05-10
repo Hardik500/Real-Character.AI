@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { ChatMessage as ChatMessageType } from '@/types';
 
 interface ChatMessageProps {
@@ -8,6 +8,44 @@ interface ChatMessageProps {
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUserMessage = message.sender === 'user';
+  const messageType = message.messageType || 'text';
+  
+  // Special handling for empty content
+  // Don't show "No message content" for loading messages
+  const messageContent = message.isLoading 
+    ? '' 
+    : message.content || 'No message content';
+
+  // Log if content is missing or message is malformed
+  React.useEffect(() => {
+    if (!message.content && !message.isLoading) {
+      console.warn('ChatMessage received with empty content:', JSON.stringify(message, null, 2));
+    }
+  }, [message]);
+
+  // Get style based on message type
+  const getMessageStyle = () => {
+    switch (messageType) {
+      case 'thinking':
+        return styles.thinkingMessage;
+      case 'media':
+        return styles.mediaMessage;
+      default:
+        return isUserMessage ? styles.userMessageText : styles.aiMessageText;
+    }
+  };
+
+  // Get bubble style based on message type
+  const getBubbleStyle = () => {
+    switch (messageType) {
+      case 'thinking':
+        return styles.thinkingBubble;
+      case 'media':
+        return styles.mediaBubble;
+      default:
+        return isUserMessage ? styles.userBubble : styles.aiBubble;
+    }
+  };
 
   return (
     <View
@@ -18,16 +56,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       <View
         style={[
           styles.bubble,
-          isUserMessage ? styles.userBubble : styles.aiBubble,
+          getBubbleStyle(),
+          message.isLoading && styles.loadingBubble,
         ]}>
         {message.isLoading ? (
-          <Text style={styles.loadingText}>...</Text>
+          <ActivityIndicator 
+            size="small" 
+            color={isUserMessage ? '#FFFFFF' : '#007AFF'} 
+            style={styles.loadingIndicator}
+          />
         ) : (
           <Text style={[
             styles.messageText,
-            isUserMessage ? styles.userMessageText : styles.aiMessageText
+            getMessageStyle()
           ]}>
-            {message.content}
+            {messageContent}
           </Text>
         )}
         <Text style={[
@@ -77,6 +120,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
+  loadingBubble: {
+    backgroundColor: '#F2F2F7', // Same as AI bubble
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
+    minWidth: 40,  // Ensure bubble has minimum width for spinner
+    minHeight: 30, // Ensure bubble has minimum height for spinner
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  thinkingBubble: {
+    backgroundColor: '#E1E1E6', // Slightly darker gray for thinking messages
+    borderTopLeftRadius: 4,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
+  },
+  mediaBubble: {
+    backgroundColor: '#EFF5FD', // Light blue tint for media messages
+    borderTopLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: '#BFDAFF',
+  },
   messageText: {
     fontSize: 16,
     lineHeight: 22,
@@ -86,6 +152,13 @@ const styles = StyleSheet.create({
   },
   aiMessageText: {
     color: '#000000', // Black text for AI messages
+  },
+  thinkingMessage: {
+    color: '#3A3A3C', // Darker gray for thinking messages
+    fontStyle: 'italic',
+  },
+  mediaMessage: {
+    color: '#0056B3', // Blue text for media messages
   },
   timestamp: {
     fontSize: 11,
@@ -98,10 +171,9 @@ const styles = StyleSheet.create({
   aiTimestamp: {
     color: '#8E8E93', // Medium gray for AI bubble timestamps
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#8E8E93',
-  },
+  loadingIndicator: {
+    margin: 4,
+  }
 });
 
 export default ChatMessage; 

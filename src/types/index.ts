@@ -77,6 +77,7 @@ export interface ChatMessage {
   timestamp: Date;
   status?: 'sent' | 'delivered' | 'read';
   isLoading?: boolean;
+  messageType?: string; // Type of message: 'text', 'thinking', 'media', etc.
 }
 
 export interface UserProfile {
@@ -95,10 +96,20 @@ export interface QuestionRequest {
   question: string;
 }
 
+export interface MessageContent {
+  content: string;
+  type: string; // 'text', 'thinking', 'media', etc.
+}
+
 export interface AnswerResponse {
   question: string;
-  answer: string;
+  answers: MessageContent[];
   username: string;
+  conversation_context?: {
+    topic?: string;
+    tone?: string;
+    interests_matched?: string[];
+  };
 }
 
 export interface ConversationHistoryResponse {
