@@ -6,22 +6,22 @@ declare global {
   interface Response {
     body?: ReadableStream<Uint8Array>;
   }
-  
+
   interface ReadableStream<R = any> {
     getReader(): ReadableStreamDefaultReader<R>;
   }
-  
+
   interface ReadableStreamDefaultReader<R = any> {
     read(): Promise<ReadableStreamReadResult<R>>;
     releaseLock(): void;
     closed: Promise<void>;
   }
-  
+
   interface ReadableStreamReadResult<T> {
     done: boolean;
     value?: T;
   }
-  
+
   class TextDecoder {
     constructor(encoding?: string);
     decode(input?: Uint8Array, options?: { stream?: boolean }): string;
@@ -59,23 +59,23 @@ export const sendMessage = async (username: string, message: string): Promise<An
     const questionRequest: QuestionRequest = {
       question: message,
     };
-    
+
     console.log(`Sending message to ${username}:`, message);
     const response = await api.post(`/personalities/users/${username}/ask`, questionRequest);
     console.log('Raw response data:', JSON.stringify(response.data, null, 2));
-    
+
     // Process the response to ensure correct formatting
     let processedResponse = response.data;
-    
+
     // Convert legacy format to new format if needed
     if (processedResponse && 'answer' in processedResponse && !('answers' in processedResponse)) {
       console.log('Converting legacy response format to new format');
-      processedResponse.answers = [{ 
-        content: processedResponse.answer, 
-        type: 'text' 
+      processedResponse.answers = [{
+        content: processedResponse.answer,
+        type: 'text',
       }];
     }
-    
+
     // Validate each answer in the answers array
     if (processedResponse && processedResponse.answers && Array.isArray(processedResponse.answers)) {
       processedResponse.answers = processedResponse.answers.map((answer: any, index: number) => {
@@ -83,27 +83,27 @@ export const sendMessage = async (username: string, message: string): Promise<An
         if (!answer.content) {
           console.warn(`Answer ${index} is missing content:`, answer);
           return {
-            content: "Empty response from server",
-            type: answer.type || 'text'
+            content: 'Empty response from server',
+            type: answer.type || 'text',
           };
         }
-        
+
         if (!answer.type) {
           console.log(`Answer ${index} missing type, defaulting to 'text'`);
           answer.type = 'text';
         }
-        
+
         return answer;
       });
     } else if (!processedResponse.answers) {
       // Create a default answers array if it doesn't exist
       console.warn('Response missing answers array, creating default');
-      processedResponse.answers = [{ 
-        content: "Invalid response format from server", 
-        type: 'text' 
+      processedResponse.answers = [{
+        content: 'Invalid response format from server',
+        type: 'text',
       }];
     }
-    
+
     console.log('Processed response:', JSON.stringify(processedResponse, null, 2));
     return processedResponse;
   } catch (error) {
@@ -113,49 +113,58 @@ export const sendMessage = async (username: string, message: string): Promise<An
 };
 
 // Streaming API endpoint for multi-message support
-export const sendStreamingMessage = async (username: string, message: string, 
+export const sendStreamingMessage = async (username: string, message: string,
   onToken: (token: string) => void,
   onComplete: (messages: any[]) => void
 ): Promise<void> => {
   try {
-    // We don't need questionRequest for non-streaming approach
     console.log(`Sending streaming message to ${username}:`, message);
-    
+
     // React Native environment check - use non-streaming approach
     console.log('Using React Native compatible approach for streaming');
-    
+
+    // Create request with multi_message flag to encourage multiple messages when appropriate
+    const requestOptions: QuestionRequest = {
+      question: message,
+      multi_message: true,  // Signal the backend to generate multiple messages
+    };
+
     // Simulate streaming by breaking up the response
-    const response = await sendMessage(username, message);
-    console.log('Got response for simulated streaming:', JSON.stringify(response, null, 2));
-    
-    if (response.answers && response.answers.length > 0) {
+    const response = await api.post(`/personalities/users/${username}/ask`, requestOptions);
+    console.log('Got response for simulated streaming:', JSON.stringify(response.data, null, 2));
+
+    if (response.data.answers && response.data.answers.length > 0) {
       // For each answer, simulate streaming by sending characters one by one
-      console.log(`Found ${response.answers.length} answers to stream`);
-      
-      for (const answer of response.answers) {
-        console.log('Streaming answer:', JSON.stringify(answer, null, 2));
-        
+      console.log(`Found ${response.data.answers.length} answers to stream`);
+
+      // Process each message one by one
+      for (let i = 0; i < response.data.answers.length; i++) {
+        const answer = response.data.answers[i];
+        const isLastMessage = i === response.data.answers.length - 1;
+
+        console.log(`Streaming answer ${i + 1}/${response.data.answers.length}:`, JSON.stringify(answer, null, 2));
+
         if (answer.content) {
           // Break the message into chunks to simulate streaming
           const content = answer.content;
           console.log(`Content length: ${content.length} characters`);
-          
+
           // Add a small initial delay to allow UI to show typing indicator
           await new Promise<void>(resolve => setTimeout(resolve, 500));
-          
+
           // Stream each character with a small delay - use words instead of characters for better UX
           const words = content.split(/(\s+)/);
           console.log(`Split into ${words.length} words/spaces`);
-          
+
           // Send first token immediately to replace "Typing..."
           if (words.length > 0) {
             onToken(words[0]);
             console.log(`Streamed first word immediately: "${words[0]}"`);
           }
-          
+
           // Stream the rest with delay
-          for (let i = 1; i < words.length; i++) {
-            const word = words[i];
+          for (let j = 1; j < words.length; j++) {
+            const word = words[j];
             // Use a longer delay for better UX
             await new Promise<void>(resolve => setTimeout(resolve, 50)); // Longer delay between words
             onToken(word);
@@ -164,34 +173,31 @@ export const sendStreamingMessage = async (username: string, message: string,
         } else {
           console.warn('Answer has no content:', answer);
           // Send a placeholder to avoid empty message
-          onToken("No content available");
+          onToken('No content available');
+        }
+
+        // After each message is complete, signal that the current message is done
+        // and we're ready for the next one (if any)
+        onComplete([{
+          content: answer.content || 'No content available',
+          type: isLastMessage ? 'final' : (answer.type || 'text'),
+        }]);
+
+        // Add a pause between messages
+        if (!isLastMessage) {
+          await new Promise<void>(resolve => setTimeout(resolve, 1000)); // Pause between multiple messages
         }
       }
-      
-      // When done streaming, send the complete messages
-      console.log('Streaming complete, sending final messages');
-      
-      // Make sure all messages have content
-      const validatedMessages = response.answers.map((msg: any) => {
-        if (!msg.content) {
-          return {
-            ...msg,
-            content: "No content available",
-            type: msg.type || 'text'
-          };
-        }
-        return msg;
-      });
-      
-      onComplete(validatedMessages);
+
+      console.log('All messages streamed.');
     } else {
       // Handle empty response
       console.warn('No answers in response for streaming');
-      onComplete([{ content: 'No response content', type: 'text' }]);
+      onComplete([{ content: 'No response content', type: 'final' }]);
     }
   } catch (error) {
     console.error('Error in streaming message:', error);
-    onComplete([{ content: 'Error: Failed to get response', type: 'text' }]);
+    onComplete([{ content: 'Error: Failed to get response', type: 'final' }]);
     throw error;
   }
 };
@@ -203,7 +209,7 @@ export const getConversationHistory = async (userId: number): Promise<Conversati
 };
 
 export const addConversationHistory = async (entry: ConversationHistoryCreate): Promise<ConversationHistoryResponse> => {
-  const response = await api.post(`/conversations/history/`, entry);
+  const response = await api.post('/conversations/history/', entry);
   return response.data;
 };
 
@@ -240,4 +246,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api; 
+export default api;

@@ -14,8 +14,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, ChatMessage, ConversationHistoryResponse } from '@/types';
 import ChatMessageComponent from '@components/ChatMessage';
 import ChatInput from '@components/ChatInput';
-import { 
-  sendStreamingMessage, 
+import {
+  sendStreamingMessage,
   getConversationHistory,
   clearConversationHistory,
 } from '@services/api';
@@ -113,86 +113,109 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
     };
     setMessages(prev => [...prev, aiLoadingMsg]);
 
+    // Track whether we're actively streaming a message
+    let isActiveStreaming = false;
+    // Track our current streaming message ID so we can update it
+    let activeStreamingId = '';
+
     try {
-      // Use streaming mode (always)
-      let streamMessage: ChatMessage = {
-        id: `ai-streaming-${Date.now()}`,
-        content: '',
-        sender: 'ai',
-        timestamp: new Date(),
-        messageType: 'text',
-        isLoading: true,
-      };
-      
-      // Replace loading message with streaming message
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiLoadingMsg.id ? streamMessage : msg
-      ));
-      
-      // Create a ref to the current content to avoid closure issues with setState
-      let currentStreamContent = '';
-      
       // Handle streaming tokens
       await sendStreamingMessage(
-        username, 
+        username,
         content,
         (token) => {
-          // Update the content reference
-          currentStreamContent += token;
-          
-          // Update the streaming message with new content
-          setMessages(prev => prev.map(msg => 
-            msg.id === streamMessage.id 
-              ? { 
-                  ...msg, 
-                  content: currentStreamContent,
-                  isLoading: false, // No longer loading once we have content
-                } 
-              : msg
-          ));
-          
+          // If no active streaming message, create one
+          if (!isActiveStreaming) {
+            isActiveStreaming = true;
+            // Create a new streaming message
+            const streamMessage: ChatMessage = {
+              id: `ai-streaming-${Date.now()}`,
+              content: token, // Start with the first token
+              sender: 'ai',
+              timestamp: new Date(),
+              messageType: 'text',
+            };
+
+            // Save the ID for later updates
+            activeStreamingId = streamMessage.id;
+
+            // Replace loading message with streaming message
+            setMessages(prev => prev.map(msg =>
+              msg.id === aiLoadingMsg.id ? streamMessage : msg
+            ));
+          } else {
+            // Update the existing streaming message with new token
+            setMessages(prev => prev.map(msg =>
+              msg.id === activeStreamingId
+                ? { ...msg, content: msg.content + token }
+                : msg
+            ));
+          }
+
           // Scroll to new content
           setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
           }, 100);
         },
         (finalMessages) => {
-          console.log('Streaming complete, final messages:', finalMessages);
-          
-          // Remove streaming message
-          setMessages(prev => prev.filter(msg => msg.id !== streamMessage.id));
-          
-          // Add each message from the final result
-          if (finalMessages && finalMessages.length > 0) {
-            finalMessages.forEach((messageContent, index) => {
-              if (!messageContent || !messageContent.content) {
-                console.warn(`Skipping invalid message at index ${index}:`, messageContent);
-                return; // Skip invalid messages
-              }
-              
-              console.log(`Adding final message ${index}:`, messageContent);
-              
-              const newMsg: ChatMessage = {
-                id: `ai-response-${Date.now()}-${index}`,
-                content: messageContent.content,
-                sender: 'ai',
-                timestamp: new Date(Date.now() + index * 500),
-                messageType: messageContent.type || 'text',
-              };
-              setMessages(prev => [...prev, newMsg]);
-            });
-          } else {
-            // Fallback if no messages received
-            console.warn('No final messages received from streaming');
-            const fallbackMsg: ChatMessage = {
-              id: `ai-response-${Date.now()}`,
-              content: 'No content received from streaming response',
+          // This is called after each complete message OR at the end
+          console.log('Message complete:', finalMessages);
+
+          if (isActiveStreaming) {
+            // Finalize the current streaming message
+            const newMsg: ChatMessage = {
+              id: activeStreamingId,
+              content: finalMessages[0].content,
               sender: 'ai',
               timestamp: new Date(),
-              messageType: 'text',
+              messageType: finalMessages[0].type || 'text',
             };
-            setMessages(prev => [...prev, fallbackMsg]);
+
+            // Replace streaming message with finalized message
+            setMessages(prev => prev.map(msg =>
+              msg.id === activeStreamingId ? newMsg : msg
+            ));
+
+            // Reset streaming state for next message
+            isActiveStreaming = false;
+            activeStreamingId = '';
+
+            // Add a new loading message for the next response (if any)
+            const nextLoadingMsg: ChatMessage = {
+              id: 'ai-loading-' + Date.now(),
+              content: '',
+              sender: 'ai',
+              timestamp: new Date(),
+              isLoading: true,
+            };
+
+            // Only add loading message if we're not at the end
+            // We'll determine this in the backend logic
+            if (finalMessages[0].type !== 'final') {
+              setMessages(prev => [...prev, nextLoadingMsg]);
+              aiLoadingMsg.id = nextLoadingMsg.id; // Update the loading message ID
+            }
+          } else {
+            // If we're not actively streaming but received a finalMessage
+            // This can happen if an error occurred or streaming ended abruptly
+            const finalMsg: ChatMessage = {
+              id: `ai-final-${Date.now()}`,
+              content: finalMessages[0].content,
+              sender: 'ai',
+              timestamp: new Date(),
+              messageType: finalMessages[0].type || 'text',
+            };
+
+            // Replace loading message with final message
+            setMessages(prev => prev.map(msg =>
+              msg.id === aiLoadingMsg.id ? finalMsg : msg
+            ));
           }
+
+          // Scroll to new content
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
         }
       );
     } catch (error) {
@@ -205,7 +228,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
       ));
     } finally {
       setSending(false);
-      
+
       // Final scroll to make sure the latest message is visible
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -240,7 +263,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
             <Text style={styles.clearButtonText}>Clear</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Message list or default message */}
         {messages.length === 0 ? (
           <View style={styles.defaultMessageContainer}>
@@ -255,7 +278,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
             contentContainerStyle={styles.messageList}
           />
         )}
-        
+
         {/* Chat input at the bottom, full width */}
         <View style={styles.inputRowFull}>
           <ChatInput onSend={handleSendMessage} disabled={sending} />

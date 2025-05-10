@@ -94,6 +94,7 @@ export interface UserProfile {
 
 export interface QuestionRequest {
   question: string;
+  multi_message?: boolean; // Flag to request multiple messages if appropriate
 }
 
 export interface MessageContent {
