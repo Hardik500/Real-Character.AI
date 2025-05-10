@@ -1,97 +1,136 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# AI Social App Frontend
 
-# Getting Started
+A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [AI Social App Backend](../ai-social-app-backend/README.md) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **User List**: Browse and select from a list of available AI-generated personalities.
+- **Chat Interface**: Real-time chat with personalities, with responses generated to match their unique style and interests.
+- **Conversation History**: View and clear your chat history with each personality.
+- **Optimistic UI**: Instant feedback when sending messages, with loading indicators for AI responses.
+- **Profile Avatars**: Auto-generated avatars for each personality.
+- **Error Handling**: User-friendly error and loading states.
+- **TypeScript**: Full type safety for robust development.
+- **Modern UI**: Clean, mobile-friendly design with theming support.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
+
+## Architecture
+
+- **React Native** with TypeScript
+- **Navigation**: Stack navigation using `@react-navigation/native` and `@react-navigation/native-stack`
+- **API Integration**: Communicates with the backend via RESTful endpoints (see [Backend README](../ai-social-app-backend/README.md) for API details)
+- **Component Structure**:
+  - `src/screens/`: App screens (Home, Chat)
+  - `src/components/`: Reusable UI components (UserList, ChatMessage, ChatInput)
+  - `src/services/api.ts`: API client (Axios)
+  - `src/types/`: TypeScript types and interfaces
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js (>=18)
+- Yarn or npm
+- React Native CLI
+- [Backend API running and accessible](../ai-social-app-backend/README.md)
+- (For iOS) Xcode and CocoaPods
+
+### 1. Install Dependencies
 
 ```sh
-# Using npm
-npm start
+npm install
+# or
+yarn install
+```
 
-# OR using Yarn
+### 2. Configure API Endpoint
+
+Edit `src/services/api.ts` and set `API_URL` to your backend's accessible IP address (not `localhost` if running on a device):
+
+```js
+const API_URL = 'http://<YOUR_BACKEND_IP>:8000';
+```
+
+### 3. Start Metro Bundler
+
+```sh
+npm start
+# or
 yarn start
 ```
 
-## Step 2: Build and run your app
+### 4. Run the App
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
+#### Android
 ```sh
-# Using npm
 npm run android
-
-# OR using Yarn
+# or
 yarn android
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
+#### iOS
 ```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+cd ios && bundle install && bundle exec pod install && cd ..
 npm run ios
-
-# OR using Yarn
+# or
 yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Usage
 
-## Step 3: Modify your app
+1. **Home Screen**: See a list of available personalities. Tap a user to start chatting.
+2. **Chat Screen**: Send messages and receive AI-generated responses in the selected user's style. Use the "Clear" button to reset the conversation.
+3. **Profile Avatars**: Each personality is shown with an avatar (auto-generated if not provided).
 
-Now that you have successfully run the app, let's make changes!
+---
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Development
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+- **TypeScript**: All code is type-safe. Types are in `src/types/`.
+- **Navigation**: Stack navigation is set up in `App.tsx`.
+- **API**: All backend calls are in `src/services/api.ts`.
+- **Code Style**: Linting with ESLint (`npm run lint`), formatting with Prettier.
+- **Path Aliases**: Use `@components/`, `@screens/`, etc., as defined in `tsconfig.json`.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Scripts
+- `npm start` / `yarn start`: Start Metro bundler
+- `npm run android` / `yarn android`: Run on Android
+- `npm run ios` / `yarn ios`: Run on iOS
+- `npm run lint`: Lint code
+- `npm test`: Run tests (Jest)
 
-## Congratulations! :tada:
+---
 
-You've successfully run and modified your React Native App. :partying_face:
+## Troubleshooting
 
-### Now what?
+- **Metro not connecting**: Ensure your device/emulator is on the same network as your backend, and `API_URL` is correct.
+- **iOS build issues**: Run `bundle install` and `bundle exec pod install` in the `ios/` directory.
+- **Backend errors**: See [Backend README](../ai-social-app-backend/README.md) for API and data requirements.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+---
 
-# Troubleshooting
+## Contributing
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+1. Fork the repo and create a feature branch.
+2. Follow the code style (ESLint, Prettier).
+3. Use TypeScript for all new code.
+4. Submit a pull request with a clear description.
 
-# Learn More
+---
 
-To learn more about React Native, take a look at the following resources:
+## License
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+MIT
+
+---
+
+## References
+- [AI Social App Backend](../ai-social-app-backend/README.md)
+- [React Native Docs](https://reactnative.dev/docs/getting-started)
+- [React Navigation](https://reactnavigation.org/)
