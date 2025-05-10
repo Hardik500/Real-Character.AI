@@ -1,10 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { ChatMessage as ChatMessageType } from '@/types';
 
 interface ChatMessageProps {
   message: ChatMessageType;
 }
+
+// Enhanced TypingIndicator component with better animation
+const TypingIndicator: React.FC<{ color: string }> = ({ color }) => {
+  // Rather than changing the whole text, we'll control the visibility of each dot
+  const [dot1Opacity, setDot1Opacity] = useState(1);
+  const [dot2Opacity, setDot2Opacity] = useState(0.3);
+  const [dot3Opacity, setDot3Opacity] = useState(0.3);
+  
+  useEffect(() => {
+    // Animate dots in sequence
+    const animateDots = () => {
+      // Animation sequence - 400ms per step
+      setTimeout(() => setDot1Opacity(1), 0);
+      setTimeout(() => setDot2Opacity(0.3), 0);
+      setTimeout(() => setDot3Opacity(0.3), 0);
+      
+      setTimeout(() => setDot1Opacity(0.3), 400);
+      setTimeout(() => setDot2Opacity(1), 400);
+      
+      setTimeout(() => setDot2Opacity(0.3), 800);
+      setTimeout(() => setDot3Opacity(1), 800);
+    };
+    
+    // Start animation immediately
+    animateDots();
+    
+    // Set up interval to repeat animation
+    const interval = setInterval(animateDots, 1200);
+    
+    // Clean up
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <View style={styles.typingContainer}>
+      <Text style={[styles.typingDot, { opacity: dot1Opacity, color }]}>•</Text>
+      <Text style={[styles.typingDot, { opacity: dot2Opacity, color }]}>•</Text>
+      <Text style={[styles.typingDot, { opacity: dot3Opacity, color }]}>•</Text>
+    </View>
+  );
+};
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUserMessage = message.sender === 'user';
@@ -60,11 +101,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           message.isLoading && styles.loadingBubble,
         ]}>
         {message.isLoading ? (
-          <ActivityIndicator 
-            size="small" 
-            color={isUserMessage ? '#FFFFFF' : '#007AFF'} 
-            style={styles.loadingIndicator}
-          />
+          <TypingIndicator color={isUserMessage ? '#FFFFFF' : '#007AFF'} />
         ) : (
           <Text style={[
             styles.messageText,
@@ -171,8 +208,15 @@ const styles = StyleSheet.create({
   aiTimestamp: {
     color: '#8E8E93', // Medium gray for AI bubble timestamps
   },
-  loadingIndicator: {
-    margin: 4,
+  typingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typingDot: {
+    fontSize: 24,
+    lineHeight: 24,
+    height: 24,
+    marginHorizontal: 2,
   }
 });
 
