@@ -1,6 +1,6 @@
 # AI Social App Frontend
 
-A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [AI Social App Backend](../ai-social-app-backend/README.md) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
+A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [AI Social App Backend](https://github.com/Hardik500/ai-social-app-backend) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
 
 ---
 
