@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,42 +6,24 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, UserProfile } from '@/types';
-import { getUserProfiles } from '@services/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 // Default avatar image for users without a profile picture
 const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=random';
 
-const UserList: React.FC = () => {
+interface UserListProps {
+  users: UserProfile[];
+  refreshControl?: React.ReactElement<React.ComponentProps<typeof RefreshControl>>;
+}
+
+const UserList: React.FC<UserListProps> = ({ users, refreshControl }) => {
   const navigation = useNavigation<NavigationProp>();
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const userProfiles = await getUserProfiles();
-      console.log('Fetched users:', userProfiles);
-      setUsers(userProfiles);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load users. Please try again.');
-      console.error('Error fetching users:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleUserPress = (user: UserProfile) => {
     navigation.navigate('Chat', {
@@ -75,32 +57,10 @@ const UserList: React.FC = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchUsers}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (users.length === 0) {
+  if (!users || users.length === 0) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.noUsersText}>No active users found</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchUsers}>
-          <Text style={styles.retryText}>Refresh</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -111,6 +71,7 @@ const UserList: React.FC = () => {
       keyExtractor={(item) => String(item.id)}
       renderItem={renderUserItem}
       contentContainerStyle={styles.listContainer}
+      refreshControl={refreshControl}
     />
   );
 };
