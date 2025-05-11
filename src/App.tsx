@@ -5,13 +5,14 @@
  */
 
 import React from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar, TouchableOpacity, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 // Import screens
-import { HomeScreen, ChatScreen } from '@screens/index';
+import { HomeScreen, ChatScreen, IngestScreen } from '@screens/index';
 
 // Import types
 import { RootStackParamList } from './types';
@@ -49,14 +50,41 @@ function App(): React.JSX.Element {
               backgroundColor: isDarkMode ? '#121212' : '#ffffff',
             },
           }}>
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen} 
-            options={{ title: 'Chats' }} 
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={({ navigation }) => ({
+              title: 'Chats',
+              headerRight: () => (
+                <TouchableOpacity
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 20,
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginRight: 16,
+                  }}
+                  onPress={() => navigation.navigate('Ingest')}
+                >
+                  <Icon
+                    name="plus"
+                    size={28}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+              ),
+            })}
           />
-          <Stack.Screen 
-            name="Chat" 
-            component={ChatScreen} 
+          <Stack.Screen
+            name="Chat"
+            component={ChatScreen}
+            options={{ headerShown: true }}
+          />
+          <Stack.Screen
+            name="Ingest"
+            component={IngestScreen}
             options={{ headerShown: true }}
           />
           {/* Additional screens can be added as needed */}

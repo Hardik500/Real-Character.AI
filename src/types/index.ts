@@ -59,6 +59,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   Search: undefined;
   Chat: { userId: string; username: string; profilePicture?: string };
+  Ingest: undefined;
 };
 
 // API Response types

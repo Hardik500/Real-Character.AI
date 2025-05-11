@@ -246,4 +246,39 @@ api.interceptors.response.use(
   }
 );
 
+// Ingestion API call (file + user details)
+export interface IngestDataParams {
+  source_type: string;
+  file: File | Blob;
+  primary_user_info: object;
+  additional_users?: object[];
+  user_mapping?: object;
+}
+
+export const ingestData = async ({
+  source_type,
+  file,
+  primary_user_info,
+  additional_users,
+  user_mapping,
+}: IngestDataParams): Promise<any> => {
+  const formData = new FormData();
+  formData.append('source_type', source_type);
+  formData.append('source_file', file);
+  formData.append('primary_user_info', JSON.stringify(primary_user_info));
+  if (additional_users) {
+    formData.append('additional_users', JSON.stringify(additional_users));
+  }
+  if (user_mapping) {
+    formData.append('user_mapping', JSON.stringify(user_mapping));
+  }
+
+  const response = await api.post('/ingestion/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
 export default api;
