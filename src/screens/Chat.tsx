@@ -162,16 +162,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
           console.log('Message complete:', finalMessages);
 
           if (isActiveStreaming) {
-            // Finalize the current streaming message
+            // Always finalize with the backend's full content to avoid truncation
             const newMsg: ChatMessage = {
               id: activeStreamingId,
-              content: finalMessages[0].content,
+              content: finalMessages[0].content, // Use backend's full message
               sender: 'ai',
               timestamp: new Date(),
               messageType: finalMessages[0].type || 'text',
             };
 
-            // Replace streaming message with finalized message
             setMessages(prev => prev.map(msg =>
               msg.id === activeStreamingId ? newMsg : msg
             ));
@@ -190,23 +189,21 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
             };
 
             // Only add loading message if we're not at the end
-            // We'll determine this in the backend logic
             if (finalMessages[0].type !== 'final') {
               setMessages(prev => [...prev, nextLoadingMsg]);
-              aiLoadingMsg.id = nextLoadingMsg.id; // Update the loading message ID
+              aiLoadingMsg.id = nextLoadingMsg.id;
             }
           } else {
             // If we're not actively streaming but received a finalMessage
             // This can happen if an error occurred or streaming ended abruptly
             const finalMsg: ChatMessage = {
               id: `ai-final-${Date.now()}`,
-              content: finalMessages[0].content,
+              content: finalMessages[0].content, // Use backend's full message
               sender: 'ai',
               timestamp: new Date(),
               messageType: finalMessages[0].type || 'text',
             };
 
-            // Replace loading message with final message
             setMessages(prev => prev.map(msg =>
               msg.id === aiLoadingMsg.id ? finalMsg : msg
             ));
