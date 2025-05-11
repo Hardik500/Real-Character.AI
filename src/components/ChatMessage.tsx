@@ -12,7 +12,7 @@ const TypingIndicator: React.FC<{ color: string }> = ({ color }) => {
   const [dot1Opacity, setDot1Opacity] = useState(1);
   const [dot2Opacity, setDot2Opacity] = useState(0.3);
   const [dot3Opacity, setDot3Opacity] = useState(0.3);
-  
+
   useEffect(() => {
     // Animate dots in sequence
     const animateDots = () => {
@@ -20,24 +20,24 @@ const TypingIndicator: React.FC<{ color: string }> = ({ color }) => {
       setTimeout(() => setDot1Opacity(1), 0);
       setTimeout(() => setDot2Opacity(0.3), 0);
       setTimeout(() => setDot3Opacity(0.3), 0);
-      
+
       setTimeout(() => setDot1Opacity(0.3), 400);
       setTimeout(() => setDot2Opacity(1), 400);
-      
+
       setTimeout(() => setDot2Opacity(0.3), 800);
       setTimeout(() => setDot3Opacity(1), 800);
     };
-    
+
     // Start animation immediately
     animateDots();
-    
+
     // Set up interval to repeat animation
     const interval = setInterval(animateDots, 1200);
-    
+
     // Clean up
     return () => clearInterval(interval);
   }, []);
-  
+
   return (
     <View style={styles.typingContainer}>
       <Text style={[styles.typingDot, { opacity: dot1Opacity, color }]}>•</Text>
@@ -50,11 +50,11 @@ const TypingIndicator: React.FC<{ color: string }> = ({ color }) => {
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUserMessage = message.sender === 'user';
   const messageType = message.messageType || 'text';
-  
+
   // Special handling for empty content
   // Don't show "No message content" for loading messages
-  const messageContent = message.isLoading 
-    ? '' 
+  const messageContent = message.isLoading
+    ? ''
     : message.content || 'No message content';
 
   // Log if content is missing or message is malformed
@@ -105,14 +105,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         ) : (
           <Text style={[
             styles.messageText,
-            getMessageStyle()
+            getMessageStyle(),
           ]}>
             {messageContent}
           </Text>
         )}
         <Text style={[
           styles.timestamp,
-          isUserMessage ? styles.userTimestamp : styles.aiTimestamp
+          isUserMessage ? styles.userTimestamp : styles.aiTimestamp,
         ]}>
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
@@ -211,13 +211,14 @@ const styles = StyleSheet.create({
   typingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 0,
   },
   typingDot: {
     fontSize: 24,
     lineHeight: 24,
     height: 24,
-    marginHorizontal: 2,
-  }
+    marginHorizontal: 1,
+  },
 });
 
-export default ChatMessage; 
+export default ChatMessage;
