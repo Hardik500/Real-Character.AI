@@ -246,10 +246,11 @@ api.interceptors.response.use(
   }
 );
 
-// Ingestion API call (file + user details)
+// For React Native, file can be { uri, name, type }
+export type RNFile = { uri: string; name: string; type: string };
 export interface IngestDataParams {
   source_type: string;
-  file: File | Blob;
+  file: File | Blob | RNFile;
   primary_user_info: object;
   additional_users?: object[];
   user_mapping?: object;
@@ -272,6 +273,8 @@ export const ingestData = async ({
   if (user_mapping) {
     formData.append('user_mapping', JSON.stringify(user_mapping));
   }
+
+  console.log('Form data:', formData);
 
   const response = await api.post('/ingestion/', formData, {
     headers: {

@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 // If you see a type error here, install the package and follow setup: https://react-native-documents.github.io/docs/install
-import { pick } from '@react-native-documents/picker';
+import { pick, keepLocalCopy } from '@react-native-documents/picker';
 import { ingestData } from '@services/api';
 
 const SOURCE_TYPES = [
@@ -24,7 +24,7 @@ const IngestScreen: React.FC = () => {
   const [sourceType, setSourceType] = useState('slack_har');
   const [primaryUser, setPrimaryUser] = useState(emptyUser());
   const [additionalUsers, setAdditionalUsers] = useState<any[]>([]);
-  const [userMapping, setUserMapping] = useState('');
+  const [userMappings, setUserMappings] = useState<{ sourceId: string; mappedName: string }[]>([]);
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -33,7 +33,16 @@ const IngestScreen: React.FC = () => {
     try {
       const [res] = await pick();
       if (res && res.uri) {
-        setFile(res);
+        // Copy the file to a persistent location using the correct API
+        const localCopies = await keepLocalCopy({ files: [{ uri: res.uri, fileName: res.name || 'file' }], destination: 'cachesDirectory' });
+        let localUri = res.uri;
+        if (localCopies[0]?.status === 'success' && localCopies[0].localUri) {
+          localUri = localCopies[0].localUri;
+        }
+        setFile({
+          ...res,
+          uri: localUri,
+        });
       }
     } catch (e) {
       Alert.alert('Error', 'Failed to pick file.');
@@ -56,6 +65,22 @@ const IngestScreen: React.FC = () => {
     );
   };
 
+  const handleAddMapping = () => {
+    setUserMappings([...userMappings, { sourceId: '', mappedName: '' }]);
+  };
+
+  const handleRemoveMapping = (idx: number) => {
+    setUserMappings(userMappings.filter((_, i) => i !== idx));
+  };
+
+  const handleMappingChange = (idx: number, field: 'sourceId' | 'mappedName', value: string) => {
+    setUserMappings(
+      userMappings.map((mapping, i) =>
+        i === idx ? { ...mapping, [field]: value } : mapping
+      )
+    );
+  };
+
   const handleSubmit = async () => {
     if (!file || !primaryUser.username) {
       Alert.alert('Error', 'Please select a file and enter primary user username.');
@@ -64,18 +89,30 @@ const IngestScreen: React.FC = () => {
     setLoading(true);
     setResult(null);
     try {
-      // Use fetch to get the blob from the file uri
-      const fileBlob = await fetch(file.uri).then(r => r.blob());
+      // Build user_mapping object from userMappings array
+      const user_mapping = userMappings.reduce((acc, curr) => {
+        if (curr.sourceId && curr.mappedName) {
+          acc[curr.sourceId] = curr.mappedName;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      // Use the file object directly for FormData
+      const fileToSend = {
+        uri: file.uri,
+        name: file.name || 'upload',
+        type: file.type || 'application/octet-stream',
+      };
       const response = await ingestData({
         source_type: sourceType,
-        file: fileBlob,
+        file: fileToSend,
         primary_user_info: primaryUser,
         additional_users: additionalUsers.filter(u => u.username),
-        user_mapping: userMapping ? JSON.parse(userMapping) : undefined,
+        user_mapping: Object.keys(user_mapping).length > 0 ? user_mapping : undefined,
       });
       setResult(response);
       Alert.alert('Success', 'Ingestion complete!');
     } catch (e: any) {
+      console.error('Error:', e);
       setResult(e?.response?.data || e?.message || 'Unknown error');
       Alert.alert('Error', 'Ingestion failed.');
     } finally {
@@ -156,18 +193,31 @@ const IngestScreen: React.FC = () => {
         </View>
       ))}
       <Button title="Add Additional User" onPress={handleAddUser} />
-      <Text style={styles.label}>User Mapping (JSON)</Text>
-      <TextInput
-        style={[styles.input, { height: 60 }]}
-        placeholder='{"U123": "alice", "U456": "bob"}'
-        value={userMapping}
-        onChangeText={setUserMapping}
-        multiline
-      />
+      <Text style={styles.label}>User Mapping</Text>
+      {userMappings.map((mapping, idx) => (
+        <View key={idx} style={styles.mappingRow}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginRight: 4 }]}
+            placeholder="Source User ID (e.g. U123)"
+            value={mapping.sourceId}
+            onChangeText={v => handleMappingChange(idx, 'sourceId', v)}
+          />
+          <TextInput
+            style={[styles.input, { flex: 1, marginLeft: 4 }]}
+            placeholder="Mapped Username (e.g. alice)"
+            value={mapping.mappedName}
+            onChangeText={v => handleMappingChange(idx, 'mappedName', v)}
+          />
+          <TouchableOpacity onPress={() => handleRemoveMapping(idx)} style={styles.removeBtn}>
+            <Text style={styles.removeBtnText}>Remove</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+      <Button title="Add User Mapping" onPress={handleAddMapping} />
       <Text style={styles.label}>Source File</Text>
       <Button title={file ? file.name || file.uri : 'Pick File'} onPress={pickFile} />
       <View style={{ height: 16 }} />
-      <Button title={loading ? 'Submitting...' : 'Submit'} onPress={handleSubmit} disabled={loading} />
+      <Button title={loading ? 'Submitting...' : 'Submit'} onPress={handleSubmit} />
       {result && (
         <View style={styles.resultBox}>
           <Text style={styles.resultTitle}>Result:</Text>
@@ -247,6 +297,11 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontWeight: 'bold',
     marginBottom: 4,
+  },
+  mappingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
 });
 
