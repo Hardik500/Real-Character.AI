@@ -208,13 +208,48 @@ export const getConversationHistory = async (userId: number): Promise<Conversati
   return response.data;
 };
 
+export const getConversationHistoryByEmail = async (email: string): Promise<ConversationHistoryResponse[]> => {
+  try {
+    console.log(`Fetching conversation history for email: ${email}`);
+    const response = await api.get(`/conversations/history/email/${email}`);
+    console.log('Conversation history response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching conversation history for email ${email}:`, error);
+    return [];
+  }
+};
+
 export const addConversationHistory = async (entry: ConversationHistoryCreate): Promise<ConversationHistoryResponse> => {
   const response = await api.post('/conversations/history/', entry);
   return response.data;
 };
 
+export const addConversationHistoryByEmail = async (entry: ConversationHistoryCreate, email: string): Promise<ConversationHistoryResponse> => {
+  try {
+    console.log(`Adding conversation history for email: ${email}`);
+    const response = await api.post('/conversations/history/email/', entry, {
+      params: { email }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error adding conversation history for email ${email}:`, error);
+    throw error;
+  }
+};
+
 export const clearConversationHistory = async (userId: number): Promise<void> => {
   await api.delete(`/conversations/history/${userId}`);
+};
+
+export const clearConversationHistoryByEmail = async (email: string): Promise<void> => {
+  try {
+    console.log(`Clearing conversation history for email: ${email}`);
+    await api.delete(`/conversations/history/email/${email}`);
+  } catch (error) {
+    console.error(`Error clearing conversation history for email ${email}:`, error);
+    throw error;
+  }
 };
 
 // Add request interceptor for logging
