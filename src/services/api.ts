@@ -53,6 +53,19 @@ export const getUserProfiles = async (): Promise<UserProfile[]> => {
   }
 };
 
+// Function to fetch all users for user selection in IngestScreen
+export const fetchUsers = async (): Promise<any[]> => {
+  try {
+    console.log('Fetching all users from:', `${API_URL}/personalities/all-users`);
+    const response = await api.get('/personalities/all-users');
+    console.log('Users API response data:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+};
+
 // Chat-related endpoints
 export const sendMessage = async (username: string, message: string): Promise<AnswerResponse> => {
   try {
