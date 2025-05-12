@@ -35,9 +35,9 @@ const UserList: React.FC<UserListProps> = ({ users, refreshControl }) => {
 
   const renderUserItem = ({ item }: { item: UserProfile }) => {
     // Generate avatar URL with the username
-    const avatarUrl = item.profilePicture || 
+    const avatarUrl = item.profilePicture ||
       `${DEFAULT_AVATAR}&name=${encodeURIComponent(item.username)}`;
-    
+
     return (
       <TouchableOpacity
         style={styles.userItem}
@@ -50,7 +50,7 @@ const UserList: React.FC<UserListProps> = ({ users, refreshControl }) => {
           </Text>
         </View>
         <Text style={styles.time}>
-          {item.created_at ? 
+          {item.created_at ?
             new Date(item.created_at).toLocaleDateString() : ''}
         </Text>
       </TouchableOpacity>
@@ -143,4 +143,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UserList; 
+export default UserList;
