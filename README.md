@@ -1,6 +1,6 @@
-# AI Social App Frontend
+# Real-Character.AI
 
-A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [AI Social App Backend](https://github.com/Hardik500/ai-social-app-backend) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
+A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [AI Social App Backend](https://github.com/Hardik500/real-character-ai-backend) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
 
 ---
 
@@ -21,7 +21,7 @@ A modern React Native app for interacting with AI-generated personalities based 
 
 - **React Native** with TypeScript
 - **Navigation**: Stack navigation using `@react-navigation/native` and `@react-navigation/native-stack`
-- **API Integration**: Communicates with the backend via RESTful endpoints (see [Backend README](../ai-social-app-backend/README.md) for API details)
+- **API Integration**: Communicates with the backend via RESTful endpoints (see [Backend README](../real-character-ai-backend/README.md) for API details)
 - **Component Structure**:
   - `src/screens/`: App screens (Home, Chat)
   - `src/components/`: Reusable UI components (UserList, ChatMessage, ChatInput)
@@ -36,7 +36,7 @@ A modern React Native app for interacting with AI-generated personalities based 
 - Node.js (>=18)
 - Yarn or npm
 - React Native CLI
-- [Backend API running and accessible](../ai-social-app-backend/README.md)
+- [Backend API running and accessible](../real-character-ai-backend/README.md)
 - (For iOS) Xcode and CocoaPods
 
 ### 1. Install Dependencies
@@ -111,7 +111,7 @@ yarn ios
 
 - **Metro not connecting**: Ensure your device/emulator is on the same network as your backend, and `API_URL` is correct.
 - **iOS build issues**: Run `bundle install` and `bundle exec pod install` in the `ios/` directory.
-- **Backend errors**: See [Backend README](../ai-social-app-backend/README.md) for API and data requirements.
+- **Backend errors**: See [Backend README](../real-character-ai-backend/README.md) for API and data requirements.
 
 ---
 
@@ -131,6 +131,6 @@ MIT
 ---
 
 ## References
-- [AI Social App Backend](../ai-social-app-backend/README.md)
+- [AI Social App Backend](../real-character-ai-backend/README.md)
 - [React Native Docs](https://reactnative.dev/docs/getting-started)
 - [React Navigation](https://reactnavigation.org/)

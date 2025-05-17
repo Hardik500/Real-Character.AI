@@ -30,7 +30,7 @@ declare global {
 
 // Create Axios instance with base URL
 // Using the IP address instead of localhost since the mobile device can't access localhost on your computer
-const API_URL = 'http://192.168.68.101:8000';
+const API_URL = 'http://192.168.0.105:8000';
 
 const api = axios.create({
   baseURL: API_URL,
