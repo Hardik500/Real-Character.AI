@@ -2,6 +2,13 @@
 
 A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [Real-Character.AI Backend](https://github.com/Hardik500/real-character-ai-backend) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
 
+
+
+
+https://github.com/user-attachments/assets/8479063f-814f-49ea-8ecc-4b2cc23963f5
+
+
+
 ---
 
 ## Features
