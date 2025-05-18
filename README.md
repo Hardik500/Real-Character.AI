@@ -1,6 +1,6 @@
 # Real-Character.AI
 
-A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [AI Social App Backend](https://github.com/Hardik500/real-character-ai-backend) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
+A modern React Native app for interacting with AI-generated personalities based on real user conversations. This frontend connects to the [Real-Character.AI Backend](https://github.com/Hardik500/real-character-ai-backend) to provide a chat experience where you can converse with simulated personalities derived from Slack, WhatsApp, and other platforms.
 
 ---
 
@@ -131,6 +131,6 @@ MIT
 ---
 
 ## References
-- [AI Social App Backend](../real-character-ai-backend/README.md)
+- [Real-Character.AI Backend](../real-character-ai-backend/README.md)
 - [React Native Docs](https://reactnative.dev/docs/getting-started)
 - [React Navigation](https://reactnavigation.org/)
